@@ -1,2 +1,12 @@
-We can use numpy.arange to create an array.
-numpy.shape and numpy.dtype can show the array's shape and data type.
+##Two activities deadline is Friday 25.4.2025
+##1- Activity
+
+1.We can use numpy.arange to create an array.
+2.numpy.shape and numpy.dtype can show the array's shape and data type.
+3.Directly multply whole array and print.
+
+##2- Activity
+1.We need to calculate the average score in each row of the 2d array.
+2.We need to calculate the average score in each column of the 2d array.
+3.Add up students' scores in each row and find the highest index.
+4.Plus 5 points in column 2.
