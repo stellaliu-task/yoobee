@@ -4,6 +4,7 @@ print(arr)
 print('shape:', arr.shape)
 print('data type:', arr.dtype)
 print('multiplied by 2:', arr * 2)
+print('\n')
 
 scores = np.array([
     [78, 85, 90],
