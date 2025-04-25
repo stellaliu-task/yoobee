@@ -3,7 +3,7 @@
 
 1.We can use numpy.arange to create an array.
 2.numpy.shape and numpy.dtype can show the array's shape and data type.
-3.Directly multply whole array and print.
+3.Directly multiply whole array and print.
 
 ##2- Activity
 1.We need to calculate the average score in each row of the 2d array.
