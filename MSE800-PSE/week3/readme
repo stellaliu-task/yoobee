@@ -1,0 +1,20 @@
+Activity1 : Deadline 2 May - Library Book Manager Using classes
+Task: Manage a small library — add and show books.
+
+
+We need two classes to do those jobs. First one is a class of book, which stores information of books, and another one is a library. 
+It operates things about books.
+
+
+Activity 2: Deadline 2 May - Simple Student Grading System Using classes
+Task: Create students, record their grades, and show results.
+
+We need a class to store students information, and another one is a system. It records
+and shows results.
+
+
+Activity 3: Deadline 2 May - rewrite below sample code (from activity w3-6) without using initializer & self.
+
+I'll try to rewrite it without using initializer & self, and I think it is possible.
+
+
