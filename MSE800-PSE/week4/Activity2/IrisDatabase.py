@@ -5,6 +5,14 @@ class DataProcessor:
     def __init__(self):
         self.data = None
 
+    _instance = None  # Class variable to hold the single instance
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+
     def load_data(self):
         iris = load_iris(as_frame=True)     # return the dataset as a pandas.DataFrame
         self.data = iris.frame              # Convert to DataFrame

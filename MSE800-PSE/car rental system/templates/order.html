@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation | Car Rental</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="web-container">
+        <header class="web-header">
+            <div class="logo">
+                <i class="fas fa-car"></i>
+                <h1>Premium Rentals</h1>
+            </div>
+            <nav>
+                <a href="/user"><i class="fas fa-user"></i> User Center</a>
+                <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </header>
+        <main class="web-main">
+            <div class="order-container">
+                <div class="order-card">
+                    <div class="order-header">
+                        <h1><i class="fas fa-check-circle" style="color:#4CAF50"></i> Booking Confirmed</h1>
+                        <p>Order #<span id="order-id"></span></p>
+                    </div>
+                    <p class="order-date" id="order-date">Order Date: Loading...</p>
+                    
+                    <div class="order-details">
+                        <div class="car-info">
+                            <div class="car-image-container">
+                                <img id="car-image" src="" alt="Car Image" class="car-image">
+                            </div>
+                            <div class="car-meta">
+                                <h4 id="car-name"></h4>
+                                <p><i class="fas fa-gas-pump"></i> <span id="car-fuel-type"></span></p>
+                                <p><i class="fas fa-cog"></i> <span id="car-gear-type"></span></p>
+                                <p><i class="fas fa-users"></i> <span id="car-seats"></span> seats</p>
+                            </div>
+                        </div>
+                        
+                        <div class="rental-details">
+                            <h4>Rental Details</h4>
+                            <p><strong>Pickup Location:</strong> <span id="pickup-location"></span></p>
+                            <p><strong>Pickup Date:</strong> <span id="pickup-date"></span></p>
+                            <p><strong>Return Date:</strong> <span id="return-date"></span></p>
+                            <p><strong>Duration:</strong> <span id="rental-duration"></span> days</p>
+                        </div>
+                        
+                        <div class="price-details">
+                            <h4>Price Breakdown</h4>
+                            <p>Base Rate: $<span id="base-price"></span></p>
+                            <p>Insurance: $<span id="insurance-price"></span></p>
+                            <p>Taxes & Fees: $<span id="taxes-fees"></span></p>
+                            <div class="total-price">
+                                <strong>Total: $<span id="total-price"></span></strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="order-actions">
+                        <button onclick="window.location.href='/user'" class="primary-btn">
+                            <i class="fas fa-user"></i> Back to User Center
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='order.js') }}?v=3.0"></script>
+</body>
+</html>

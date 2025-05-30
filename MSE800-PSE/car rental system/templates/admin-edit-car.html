@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Car | Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="web-container">
+        <header class="web-header">
+            <div class="logo">
+                <i class="fas fa-car"></i>
+                <h1>Premium Rentals Admin</h1>
+            </div>
+            <nav>
+                <a href="/admin/cars"><i class="fas fa-car"></i> Manage Cars</a>
+                <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
+            </nav>
+        </header>
+
+        <main class="web-main">
+            <div class="form-container"
+     style="max-width:760px; min-width:320px; margin:40px auto; padding:40px 48px 32px 48px; box-shadow:0 2px 10px rgba(0,0,0,0.1); border-radius:12px;">
+
+                <h2 style="margin-bottom:1.5rem;color:#4CAF50;">
+                    <i class="fas fa-edit"></i> Edit Car
+                </h2>
+                <div class="error-message" id="error-message" style="display:none;"></div>
+                <form id="edit-car-form">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="car-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="car-location" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Price (per day)</label>
+                        <input type="number" id="car-price" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Seats</label>
+                        <input type="number" id="car-seats" min="1" max="20" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fuel Type</label>
+                        <input type="text" id="car-fuel-type" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Gear Type</label>
+                        <input type="text" id="car-gear-type" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Image URL</label>
+                        <input type="text" id="car-image-url">
+                    </div>
+                    <div class="form-group" style="display:flex;justify-content:space-between;align-items:center;">
+                        <button type="submit" class="primary-btn" style="width:48%;">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                        <button type="button" class="primary-btn" style="width:48%;background:#eee;color:#333;" onclick="window.location.href='/admin/cars'">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Get car id from url
+        function getCarIdFromURL() {
+            const parts = window.location.pathname.split('/');
+            return parts[parts.length-1];
+        }
+
+        const carId = getCarIdFromURL();
+
+        // Prefill
+        fetch(`/api/admin/cars/${carId}`)
+            .then(r => r.json())
+            .then(car => {
+                document.getElementById('car-name').value = car.name;
+                document.getElementById('car-location').value = car.location;
+                document.getElementById('car-price').value = car.price;
+                document.getElementById('car-seats').value = car.seats;
+                document.getElementById('car-fuel-type').value = car.fuel_type;
+                document.getElementById('car-gear-type').value = car.gear_type;
+                document.getElementById('car-image-url').value = car.image_url || '';
+            });
+
+        document.getElementById('edit-car-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('car-name').value,
+                location: document.getElementById('car-location').value,
+                price: parseFloat(document.getElementById('car-price').value),
+                seats: parseInt(document.getElementById('car-seats').value),
+                fuel_type: document.getElementById('car-fuel-type').value,
+                gear_type: document.getElementById('car-gear-type').value,
+                image_url: document.getElementById('car-image-url').value
+            };
+            fetch(`/api/admin/cars/${carId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(r => {
+                if (r.ok) {
+                    window.location.href = '/admin/cars';
+                } else {
+                    return r.json().then(data => { throw new Error(data.error || 'Update failed'); });
+                }
+            })
+            .catch(err => {
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.textContent = err.message;
+                errorDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Cars</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=3.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-car"></i> Find Your Perfect Rental Car</h1>
+        </header>
+        
+        <div class="search-section">
+            <div class="search-card">
+                <div class="search-form">
+                    <div class="form-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Pickup Location</label>
+                        <input type="text" id="location" placeholder="Enter city or address">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="far fa-calendar-alt"></i> Pickup Date</label>
+                            <input type="datetime-local" id="start-date">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="far fa-calendar-alt"></i> Return Date</label>
+                            <input type="datetime-local" id="end-date">
+                        </div>
+                    </div>
+                    <button id="search-btn" class="primary-btn">
+                        <i class="fas fa-search"></i> Search Cars
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading-spinner" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Searching available cars...
+        </div>
+        
+        <div id="results-container">
+            <div id="no-results" style="display: none;">
+                <div class="empty-state">
+                    <i class="fas fa-car-crash"></i>
+                    <h3>No cars available for your search</h3>
+                    <p>Try adjusting your dates or location</p>
+                </div>
+            </div>
+            
+            <div id="results-grid" class="cars-grid"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='search.js') }}?v=3.1"></script>
+</body>
+</html>

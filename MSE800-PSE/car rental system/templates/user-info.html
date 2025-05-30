@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | Premium Rentals</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.1.0/js/countrySelect.min.js"></script>
+    
+    <style>
+        .profile-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .profile-header h1 {
+            color: #4CAF50;
+            margin: 0;
+        }
+        
+        .back-btn {
+            background-color: #f5f5f5;
+            color: #333;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .profile-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .info-group {
+            margin-bottom: 20px;
+        }
+        
+        .info-group label {
+            display: block;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .info-group .info-value {
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            min-height: 20px;
+        }
+        
+        .edit-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+            .country-flag {
+                display: inline-block;
+                width: 16px;
+                height: 11px;
+                margin-right: 8px;
+                background-size: cover;
+                vertical-align: middle;
+            }
+            
+            .country-name {
+                vertical-align: middle;
+            }
+    </style>
+</head>
+<body>
+    <div class="web-container">
+        <header class="web-header">
+            <div class="logo">
+                <i class="fas fa-car"></i>
+                <h1>Premium Rentals</h1>
+            </div>
+            <nav>
+                <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </header>
+
+        <main class="web-main">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h1><i class="fas fa-user"></i> My Profile</h1>
+                    <button class="back-btn" onclick="window.location.href='/user'">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+                
+                <div class="profile-info">
+                    <div class="info-group">
+                        <label>Full Name</label>
+                        <div class="info-value" id="user-name">Loading...</div>
+                    </div>
+                    
+                    <div class="info-group">
+                        <label>Email</label>
+                        <div class="info-value" id="user-email">Loading...</div>
+                    </div>
+                    
+                    <div class="info-group">
+                        <label>Phone Number</label>
+                        <div class="info-value" id="user-phone">Loading...</div>
+                    </div>
+                    
+                    <div class="info-group">
+                        <label>Driver Licence</label>
+                        <div class="info-value" id="user-licence">Loading...</div>
+                    </div>
+                    <div class="info-group">
+                        <label>Licence Country</label>
+                        <div class="info-value" id="user-licence-country">
+                            <span class="country-flag"></span>
+                            <span class="country-name">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="edit-btn" onclick="window.location.href='/edit-profile'">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </button>
+            </div>
+        </main>
+
+        <footer class="web-footer">
+            <p>&copy; 2025 Premium Car Rentals. All rights reserved.</p>
+        </footer>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Load user info
+            fetch('/api/user', {
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load profile');
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('user-name').textContent = data.name || 'Not provided';
+                document.getElementById('user-email').textContent = data.email || 'Not provided';
+                document.getElementById('user-phone').textContent = data.phone || 'Not provided';
+                document.getElementById('user-licence').textContent = data.driver_licence_number || 'Not provided';
+
+                const countryName = data.driver_licence_country || '';
+                const flagElement = document.querySelector('#user-licence-country .country-flag');
+                const countryNameElement = document.querySelector('#user-licence-country .country-name');
+                countryNameElement.textContent = countryName || 'Not provided';
+
+                if (countryName && countryName !== 'Not provided') {
+                    // Try matching common cases for flags, including handling "(...)" in names
+                    let matchName = countryName.split('(')[0].trim();
+                    fetch('https://cdn.jsdelivr.net/npm/country-select-js@2.1.0/data.json')
+                    .then(r => r.json())
+                    .then(countries => {
+                        const country = countries.find(c => c.name === matchName || c.name === countryName);
+                        if (country) {
+                            flagElement.style.backgroundImage = `url(https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.1.0/img/flags/${country.iso2.toLowerCase()}.png)`;
+                            flagElement.style.display = "inline-block";
+                        } else {
+                            flagElement.style.display = "none";
+                        }
+                    })
+                    .catch(() => {
+                        flagElement.style.display = "none";
+                    });
+                } else {
+                    flagElement.style.display = "none";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load profile information');
+            });
+
+            // Logout handler
+            document.getElementById('logout-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('user');
+                fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                }).then(() => {
+                    window.location.href = '/';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

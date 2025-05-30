@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Cars</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .admin-header h1 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cars-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .car-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .car-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .car-image-container {
+            height: 180px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .car-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .car-details {
+            padding: 20px;
+        }
+        
+        .car-title {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+        }
+        
+        .car-meta {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .car-meta i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .car-price {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #2c3e50;
+        }
+        
+        .edit-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 15px;
+        }
+        
+        .edit-btn:hover {
+            background: #45a049;
+        }
+        
+        .edit-btn i {
+            margin-right: 8px;
+        }
+        
+        .add-car-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+        }
+        
+        .add-car-btn:hover {
+            background: #45a049;
+        }
+        
+        .add-car-btn i {
+            margin-right: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .cars-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1><i class="fas fa-car"></i> Manage Cars</h1>
+           <!--<a href="/admin/cars/add" class="add-car-btn">
+                <i class="fas fa-plus"></i> Add New Car
+            </a>-->
+        </div>
+
+        <div class="cars-grid" id="carsGrid">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Loading cars...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch cars from API
+            fetch('/api/admin/cars')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(cars => {
+                    const carsGrid = document.getElementById('carsGrid');
+                    
+                    if (cars.length === 0) {
+                        carsGrid.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-car-crash"></i>
+                                <h3>No cars found in database</h3>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Clear loading message
+                    carsGrid.innerHTML = '';
+                    
+                    // Create car cards
+                    cars.forEach(car => {
+                        const carCard = document.createElement('div');
+                        carCard.className = 'car-card';
+                        carCard.innerHTML = `
+                            <div class="car-image-container">
+                                <img src="${car.image_url}" alt="${car.name}" class="car-image" onerror="this.onerror=null;this.src='/static/aqua.jpeg'">
+                            </div>
+                            <div class="car-details">
+                                <h3 class="car-title">${car.name}</h3>
+                                <div class="car-meta">
+                                    <span><i class="fas fa-gas-pump"></i> ${car.fuel_type}</span>
+                                    <span><i class="fas fa-cog"></i> ${car.gear_type}</span>
+                                    <span><i class="fas fa-user"></i> ${car.seats}</span>
+                                </div>
+                                <div class="car-meta">
+                                    <i class="fas fa-map-marker-alt"></i> ${car.location}
+                                </div>
+                                <div class="car-price">$${car.price.toFixed(2)}<small>/day</small></div>
+                                <button class="edit-btn" onclick="window.location.href='/admin/cars/edit/${car.id}'">
+                                    <i class="fas fa-edit"></i> Edit Car
+                                </button>
+
+                            </div>
+                        `;
+                        carsGrid.appendChild(carCard);
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('carsGrid').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Error loading cars</h3>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                });
+        });
+    </script>
+</body>
+</html>

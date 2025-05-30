@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Car Rental</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=3.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .styled-select,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            background: #fff;
+            box-sizing: border-box;
+            margin-top: 2px;
+            margin-bottom: 5px;
+            appearance: none;
+        }
+
+        .styled-select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.2);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="web-container">
+        <!-- Header -->
+        <header class="web-header">
+            <div class="logo">
+                <i class="fas fa-car"></i>
+                <h1>Premium Rentals</h1>
+            </div>
+            <nav>
+                <a href="/dashboard" class="active"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="web-main">
+            <!-- Search Section -->
+            <section class="search-section">
+                <h2><i class="fas fa-search"></i> Find Available Cars</h2>
+                <div class="search-form web-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-map-marker-alt"></i> Location</label>
+                           <select id="dashboard-location" class="styled-select" required>
+                                <option value="">-- Choose location --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="far fa-calendar-alt"></i> Pickup Date</label>
+                            <input type="datetime-local" id="dashboard-start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="far fa-calendar-alt"></i> Return Date</label>
+                            <input type="datetime-local" id="dashboard-end-date" required>
+                        </div>
+                    </div>
+                    <button id="dashboard-search-btn" class="primary-btn">
+                        <i class="fas fa-search"></i> Search Cars
+                    </button>
+                </div>
+            </section>
+
+            <!-- Available Cars Section -->
+            <section class="cars-section">
+                <h2><i class="fas fa-car"></i> Currently Available Cars</h2>
+                <div id="dashboard-loading" class="loading-spinner" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading available cars...
+                </div>
+                <div id="dashboard-no-results" style="display: none;">
+                    <div class="empty-state">
+                        <i class="fas fa-car-crash"></i>
+                        <h3>No cars available</h3>
+                        <p>Try adjusting your search criteria</p>
+                    </div>
+                </div>
+                <div id="dashboard-results" class="cars-grid web-grid"></div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="web-footer">
+            <p>&copy; 2025 Premium Car Rentals. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}?v=3.0"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/locations')
+                .then(response => response.json())
+                .then(locations => {
+                    const select = document.getElementById('dashboard-location');
+                    locations.forEach(loc => {
+                        const option = document.createElement('option');
+                        option.value = loc;
+                        option.textContent = loc;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(() => {
+                   
+                });
+        });
+    </script>
+</body>
+</html>

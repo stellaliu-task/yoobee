@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile | Premium Rentals</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.1.0/css/countrySelect.min.css">
+    <style>
+        .edit-profile-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        
+        .edit-profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .edit-profile-header h1 {
+            color: #4CAF50;
+            margin: 0;
+        }
+        
+        .back-btn {
+            background-color: #f5f5f5;
+            color: #333;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .edit-profile-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .form-actions {
+            grid-column: span 2;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .cancel-btn {
+            background-color: #f5f5f5;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .country-select {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .country-select .flag {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="web-container">
+        <header class="web-header">
+            <div class="logo">
+                <i class="fas fa-car"></i>
+                <h1>Premium Rentals</h1>
+            </div>
+            <nav>
+                <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </header>
+
+        <main class="web-main">
+            <div class="edit-profile-container">
+                <div class="edit-profile-header">
+                    <h1><i class="fas fa-user-edit"></i> Edit Profile</h1>
+                    <button class="back-btn" onclick="window.location.href='/user-info'">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+                
+                <form id="profile-form" class="edit-profile-form">
+                    <div class="form-group">
+                        <label for="first-name">First Name</label>
+                        <input type="text" id="first-name" name="first_name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="last-name">Last Name</label>
+                        <input type="text" id="last-name" name="last_name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone_number">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="license">Driver License Number</label>
+                        <input type="text" id="license" name="driver_licence_number">
+                    </div>
+                    
+                     <div class="form-group">
+                        <label for="license-country">License Country</label>
+                        <input type="text" id="license-country" name="driver_licence_country" class="country-select">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expiry-date">License Expiry Date</label>
+                        <input type="date" id="expiry-date" name="licence_expiry_date">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="window.location.href='/user-info'">Cancel</button>
+                        <button type="submit" class="save-btn">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer class="web-footer">
+            <p>&copy; 2025 Premium Car Rentals. All rights reserved.</p>
+        </footer>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.1.0/js/countrySelect.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            $("#license-country").countrySelect({
+                defaultCountry: "us",
+                responsiveDropdown: true,
+                preferredCountries: ['us', 'gb', 'ca', 'au', 'de', 'fr', 'nz', 'cn', 'in', 'br']
+            });
+            // Check if user is logged in
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Load current profile data
+            fetch('/api/user', {
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load profile');
+                return response.json();
+            })
+            .then(data => {
+                // Parse name into first and last if available
+                if (data.name && data.name !== 'Not provided') {
+                    const nameParts = data.name.split(' ');
+                    document.getElementById('first-name').value = nameParts[0] || '';
+                    document.getElementById('last-name').value = nameParts.slice(1).join(' ') || '';
+                }
+                
+                if (data.phone && data.phone !== 'Not provided') {
+                    document.getElementById('phone').value = data.phone;
+                }
+                
+                if (data.license && data.license !== 'Not provided') {
+                    document.getElementById('license').value = data.license;
+                }
+                if (data.driver_licence_country && data.driver_licence_country !== 'Not provided') {
+                    $("#license-country").countrySelect("setCountry", data.driver_licence_country);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load profile information');
+            });
+
+            // Form submission handler
+            document.getElementById('profile-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    first_name: document.getElementById('first-name').value.trim(),
+                    last_name: document.getElementById('last-name').value.trim(),
+                    phone_number: document.getElementById('phone').value.trim(),
+                    driver_licence_number: document.getElementById('license').value.trim(),
+                    driver_licence_country: document.getElementById('license-country').value.trim(),
+                    licence_expiry_date: document.getElementById('expiry-date').value.trim()
+                };
+                
+                // Remove empty fields
+                Object.keys(formData).forEach(key => {
+                    if (formData[key] === '') {
+                        delete formData[key];
+                    }
+                });
+                
+                if (Object.keys(formData).length === 0) {
+                    alert('No changes to save');
+                    return;
+                }
+                
+                fetch('/api/user/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to update profile');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('Profile updated successfully');
+                        window.location.href = '/user-info';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            });
+
+            // Logout handler
+            document.getElementById('logout-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('user');
+                fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                }).then(() => {
+                    window.location.href = '/';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
