@@ -5,6 +5,26 @@ from order_manager import OrderManager
 import sqlite3
 import os
 
+def debug_car_images(db_path="car_rental.db", extract_car_id=None, output_file="extracted_image.png"):
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    print("Car ID | Name                 | Image Size (bytes)")
+    print("-" * 45)
+    cur.execute("SELECT id, name, LENGTH(img) FROM cars")
+    rows = cur.fetchall()
+    for row in rows:
+        print(f"{row[0]:6} | {row[1]:20} | {row[2] if row[2] else 0}")
+    if extract_car_id is not None:
+        cur.execute("SELECT img FROM cars WHERE id = ?", (extract_car_id,))
+        result = cur.fetchone()
+        if result and result[0]:
+            with open(output_file, "wb") as f:
+                f.write(result[0])
+            print(f"\nExtracted image for car id {extract_car_id} as {output_file}")
+        else:
+            print(f"\nNo image found for car id {extract_car_id}")
+    conn.close()
+
 def main():
     # Initialize database and managers
     db = Database()
@@ -13,7 +33,7 @@ def main():
         user_manager = UserManager(db.conn)
         car_manager = CarManager(db.conn)
         order_manager = OrderManager(db.conn)
-
+        
         # Create a test user
         user_id = user_manager.signup("test0@example.com", "passwordtest123")
         print(f"Created user with ID: {user_id}")
@@ -54,6 +74,26 @@ def main():
     finally:
         db.close()
 
+def debug_car_images(db_path="car_rental.db", extract_car_id=None, output_file="extracted_image.png"):
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    print("Car ID | Name                 | Image Size (bytes)")
+    print("-" * 45)
+    cur.execute("SELECT id, name, LENGTH(img) FROM cars")
+    rows = cur.fetchall()
+    for row in rows:
+        print(f"{row[0]:6} | {row[1]:20} | {row[2] if row[2] else 0}")
+    if extract_car_id is not None:
+        cur.execute("SELECT img FROM cars WHERE id = ?", (extract_car_id,))
+        result = cur.fetchone()
+        if result and result[0]:
+            with open(output_file, "wb") as f:
+                f.write(result[0])
+            print(f"\nExtracted image for car id {extract_car_id} as {output_file}")
+        else:
+            print(f"\nNo image found for car id {extract_car_id}")
+    conn.close()
+
 def update_all_car_images():
     try:
         # Connect to the database
@@ -86,7 +126,24 @@ def update_all_car_images():
             conn.close()
 
 if __name__ == "__main__":
-    main()
+    #main()
     
     # Then update the car images
-    update_all_car_images()
+    #update_all_car_images()
+    print("== Car Rental DB Tools ==")
+    print("1. List all cars and their image sizes")
+    print("2. Extract image for a car (save as PNG)")
+    print("Other: Quit")
+    choice = input("Choose option: ").strip()
+    db_path = "/Users/stella/Documents/yoobee/MSE800-PSE/car rental system/car_rental.db"
+
+    if choice == "1":
+        debug_car_images(db_path)
+    elif choice == "2":
+        car_id = int(input("Enter car ID to extract: "))
+        out_file = input("Enter output filename [default: extracted_image.png]: ").strip()
+        if not out_file:
+            out_file = "extracted_image.png"
+        debug_car_images(extract_car_id=car_id, output_file=out_file)
+    else:
+        print("Bye.")

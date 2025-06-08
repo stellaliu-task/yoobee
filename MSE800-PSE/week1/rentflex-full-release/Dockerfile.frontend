@@ -1,0 +1,18 @@
+FROM node:18-alpine
+
+# Install pnpm
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# Copy package files
+COPY frontend/package.json frontend/pnpm-lock.yaml* ./
+
+# Install dependencies using pnpm
+RUN pnpm install
+
+# Expose port 3000 for development
+EXPOSE 3000
+
+# Start development server
+CMD ["pnpm", "dev"]

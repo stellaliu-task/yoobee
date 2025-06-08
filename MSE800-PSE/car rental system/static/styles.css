@@ -667,3 +667,24 @@ body {
         .order-card {
     min-height: 240px; /* Adjust as needed for your card's content */
 }
+
+.car-reviews {
+    margin-top: 10px;
+    background: #f6f8fa;
+    border-radius: 7px;
+    padding: 10px;
+    font-size: 0.97rem;
+}
+.review-item {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ececec;
+    padding-bottom: 8px;
+}
+.review-stars {
+    color: #FFD600;
+    margin-right: 7px;
+}
+.review-content {
+    margin-right: 12px;
+}
+

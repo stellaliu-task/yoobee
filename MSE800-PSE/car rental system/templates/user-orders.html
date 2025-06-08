@@ -84,6 +84,7 @@
                 
                 console.log('Orders to render:', orders);
                 orders.forEach(order => {
+                    
                     try {
                         // Validate minimal fields
                         if (!order || typeof order !== 'object') return;
@@ -104,7 +105,7 @@
                                 return dtStr;
                             }
                         };
-                        // Defensive: all fields optional
+                        
                         orderElement.innerHTML = `
                             <div class="order-header">
                                 <h3>Order #${order.id || 'N/A'}</h3>
@@ -122,6 +123,13 @@
                             <button class="view-order-btn" data-id="${order.id}">
                                 <i class="fas fa-eye"></i> View Details
                             </button>
+                            
+                            ${order.raw_data && order.raw_data.returned == 1 ? `
+                                <button class="view-order-btn review-order-btn" data-id="${order.id}">
+                                    <i class="fas fa-star"></i> Review
+                                </button>
+                            ` : ''}
+
                         `;
                         fragment.appendChild(orderElement);
                     } catch (err) {
@@ -137,6 +145,13 @@
                     btn.addEventListener('click', function() {
                         const orderId = this.getAttribute('data-id');
                         window.location.href = `/order?order_id=${orderId}`;
+                    });
+                });
+
+                document.querySelectorAll('.review-order-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const orderId = this.getAttribute('data-id');
+                        window.location.href = `/review?order_id=${orderId}`;
                     });
                 });
             })

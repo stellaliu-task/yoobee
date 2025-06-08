@@ -108,9 +108,36 @@ function renderCars(cars) {
                 <button class="book-btn">
                     <i class="fas fa-calendar-check"></i> Book Now
                 </button>
+                <div class="car-reviews" id="car-reviews-${car.id}">
+                    <span>Loading reviews...</span>
+                </div>
             </div>
         </div>
     `).join('');
+
+    // ==== Add this block to load reviews after rendering ====
+    cars.forEach(car => {
+        const reviewsDiv = document.getElementById(`car-reviews-${car.id}`);
+        if (reviewsDiv) {
+            fetch(`/api/reviews?car_id=${car.id}`)
+                .then(res => res.json())
+                .then(reviews => {
+                    if (!reviews.length) {
+                        reviewsDiv.innerHTML = '<em>No reviews yet</em>';
+                    } else {
+                        reviewsDiv.innerHTML = reviews.map(r => `
+                            <div class="review-item">
+                                <span class="review-stars">${'★'.repeat(r.ranking)}${'☆'.repeat(10 - r.ranking)}</span>
+                                <span class="review-content">${r.review_content}</span>
+                                <small>by ${r.email} (${r.submit_datetime.slice(0,10)})</small>
+                            </div>
+                        `).join('');
+                    }
+                });
+        }
+    });
+
+
 
     // Add event listeners to book buttons
     document.querySelectorAll('.book-btn').forEach(btn => {

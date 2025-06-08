@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    platform: linux/amd64
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+#   mock:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.mock
+#     ports:
+#       - "8001:8000"
+#     volumes:
+#       - ./mock:/app
+
+  # mysql:
+  #   image: mysql:8.0
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+  #     MYSQL_DATABASE: ${DB_NAME}
+  #     MYSQL_USER: ${DB_USER}
+  #     MYSQL_PASSWORD: ${DB_PASSWORD}
+  #   ports:
+  #     - "3307:3306"  # 修改主机端口为3307，避免与本地MySQL冲突
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #     - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pyourpassword"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
+      
+  mysql_test:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: rentflex_test
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3308:3306"  # 使用3308端口避免冲突
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pyourpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: rentflex-backend
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql_test  # 修改为依赖测试数据库
+    environment:
+      DB_HOST: mysql_test  # 连接到测试数据库
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: rentflex_test  # 使用测试数据库名
+      ENV: test
+    # env_file:
+    #   - ./backend/.env.dev
+    command: ["sh", "/app/wait-for-db.sh", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+  mysql_data:
+  mysql_test_data:  # 添加测试数据库卷
+

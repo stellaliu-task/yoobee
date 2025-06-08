@@ -7,6 +7,8 @@ from car_manager import CarManager
 from admin_manager import AdminManager
 from datetime import datetime
 from functools import wraps
+import base64
+
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.secret_key = '^GKIOJFHIJPK"K::JL12'
@@ -398,7 +400,11 @@ def admin_required(f):
 @app.route('/admin-login')
 def admin_login_page():
     """Render the admin login page"""
-    return render_template('admin-login.html')
+    return render_template('admin-home.html')
+
+@app.route('/admin-home')
+def admin_home():
+    return render_template('admin-home.html')
 
 # Admin login route
 @app.route('/api/admin/login', methods=['POST'])
@@ -406,7 +412,8 @@ def admin_login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    
+    print("LOGIN attempt data:", data)  # print received data
+
     if not email or not password:
         return jsonify({'error': 'Email and password are required'}), 400
     
@@ -414,11 +421,13 @@ def admin_login():
     cur = get_db().conn.cursor()
     cur.execute("SELECT * FROM admin WHERE email=?", (email,))
     admin = cur.fetchone()
-    
+    print("DB lookup for admin:", admin)
+
     if admin and admin_manager._verify_password(admin['password_hash'], password):
         session['admin_id'] = admin['id']
         return jsonify({'success': True})
     
+    print("Password check failed.")
     return jsonify({'error': 'Invalid credentials'}), 401
 
 # Admin car management routes
@@ -487,9 +496,16 @@ def api_admin_get_car(car_id):
     row = cur.fetchone()
     if not row:
         return jsonify({'error': 'Car not found'}), 404
+
     columns = [desc[0] for desc in cur.description]
     car = dict(zip(columns, row))
+
+    if car.get('picture'):
+        car['image_base64'] = base64.b64encode(car['picture']).decode('utf-8')
+        del car['picture']  # Remove the raw BLOB
+
     return jsonify(car)
+
 
 # Update car details
 @app.route('/api/admin/cars/<int:car_id>', methods=['PUT'])
@@ -511,6 +527,174 @@ def api_admin_update_car(car_id):
 def admin_edit_car_page(car_id):
     return render_template('admin-edit-car.html')
 
+@app.route('/api/admin/orders')
+def api_admin_orders():
+    conn = get_db().conn 
+    orders = AdminManager.get_all_orders(conn)
+    formatted_orders = []
+    for row in orders:
+        order_dict = dict(row)
+        try:
+            # Parse datetimes
+            from datetime import datetime
+            def parse_dt(dt_str):
+                if not dt_str:
+                    return None
+                dt_str = dt_str.split('+')[0].split('.')[0]
+                for sep in ['T', ' ']:
+                    for fmt in [f'%Y-%m-%d{sep}%H:%M:%S', f'%Y-%m-%d{sep}%H:%M']:
+                        try:
+                            return datetime.strptime(dt_str, fmt)
+                        except ValueError:
+                            continue
+                return None
+            start_dt = parse_dt(order_dict['start_datetime'])
+            end_dt = parse_dt(order_dict['end_datetime'])
+            created_dt = parse_dt(order_dict.get('created_at')) or start_dt
+
+            days = max(1, (end_dt - start_dt).days) if start_dt and end_dt else 1
+            price = float(order_dict.get('price', 0) or 0)
+            insurance = float(order_dict.get('insurance_price', 0) or 0)
+            total_price = (price * days) + (insurance * days)
+
+            order_dict['total_price'] = round(total_price, 2)
+            order_dict['start_datetime'] = start_dt.isoformat() if start_dt else order_dict.get('start_datetime')
+            order_dict['end_datetime'] = end_dt.isoformat() if end_dt else order_dict.get('end_datetime')
+            order_dict['created_at'] = created_dt.isoformat() if created_dt else order_dict.get('created_at')
+            formatted_orders.append(order_dict)
+        except Exception as e:
+            print(f"Error formatting order {order_dict.get('id')}: {str(e)}")
+            order_dict['total_price'] = 0
+            formatted_orders.append(order_dict)
+    return jsonify(formatted_orders)
+
+@app.route('/api/admin/orders/<int:order_id>/returned', methods=['POST'])
+def api_admin_order_returned(order_id):
+    conn = get_db().conn
+    cur = conn.cursor()
+    cur.execute("UPDATE orders SET returned = 1 WHERE id = ?", (order_id,))
+    conn.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/user/review')
+def api_user_get_review():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    order_id = request.args.get('order_id')
+    if not order_id:
+        return jsonify({'error': 'No order_id'}), 400
+    conn = get_db().conn
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT * FROM reviews
+        WHERE user_id = ? AND car_id = (
+            SELECT car_id FROM orders WHERE id = ?
+        )
+        AND EXISTS (
+            SELECT 1 FROM orders WHERE id = ? AND user_id = ? AND returned = 1
+        )
+    ''', (session['user_id'], order_id, order_id, session['user_id']))
+    review = cur.fetchone()
+    if not review:
+        return jsonify({'review': None})
+    review = dict(review)
+    return jsonify({'review': review})
+
+@app.route('/api/user/review', methods=['POST'])
+def api_user_post_review():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    user_id = session['user_id']
+    order_id = request.form.get('order_id')
+    ranking = request.form.get('ranking')
+    review_content = request.form.get('review_content')
+    if not all([order_id, ranking, review_content]):
+        return jsonify({'error': 'Missing fields'}), 400
+    conn = get_db().conn
+    cur = conn.cursor()
+    # Only allow review if order is returned
+    cur.execute('SELECT car_id, returned FROM orders WHERE id = ? AND user_id = ?', (order_id, user_id))
+    order = cur.fetchone()
+    if not order or not order['returned']:
+        return jsonify({'error': 'You cannot review this order'}), 403
+    car_id = order['car_id']
+    # Check if review already exists
+    cur.execute('SELECT 1 FROM reviews WHERE user_id = ? AND car_id = ?', (user_id, car_id))
+    if cur.fetchone():
+        return jsonify({'error': 'You have already reviewed this car for this order'}), 400
+    # Insert review
+    cur.execute('''
+        INSERT INTO reviews (submit_datetime, user_id, car_id, ranking, review_content, show_state)
+        VALUES (CURRENT_TIMESTAMP, ?, ?, ?, ?, 1)
+    ''', (user_id, car_id, ranking, review_content))
+    conn.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/user/order/<int:order_id>')
+def api_user_order(order_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    conn = get_db().conn
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT o.id, o.car_id, c.name as car_name, o.start_datetime, o.end_datetime
+        FROM orders o
+        JOIN cars c ON o.car_id = c.id
+        WHERE o.id = ? AND o.user_id = ?
+    ''', (order_id, session['user_id']))
+    row = cur.fetchone()
+    if not row:
+        return jsonify({'error': 'Order not found'}), 404
+    return jsonify(dict(row))
+
+@app.route('/review')
+def user_review_page():
+    return render_template('user-review.html')
+
+@app.route('/api/admin/reviews')
+def api_admin_reviews():
+    conn = get_db().conn
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT r.*, u.email as user_email, c.name as car_name
+        FROM reviews r
+        JOIN users u ON r.user_id = u.id
+        JOIN cars c ON r.car_id = c.id
+    ''')
+    reviews = cur.fetchall()
+    reviews = [dict(row) for row in reviews]
+    return jsonify(reviews)
+
+@app.route('/api/admin/reviews/<int:review_id>/visibility', methods=['PUT'])
+def api_admin_toggle_review_visibility(review_id):
+    conn = get_db().conn
+    cur = conn.cursor()
+    # Get current show_state
+    cur.execute("SELECT show_state FROM reviews WHERE id = ?", (review_id,))
+    row = cur.fetchone()
+    if not row:
+        return jsonify({'error': 'Review not found'}), 404
+    new_state = not bool(row['show_state'])
+    cur.execute("UPDATE reviews SET show_state = ? WHERE id = ?", (int(new_state), review_id))
+    conn.commit()
+    return jsonify({'success': True, 'show_state': int(new_state)})
+
+@app.route('/api/reviews')
+def api_car_reviews():
+    car_id = request.args.get('car_id')
+    if not car_id:
+        return jsonify({'error': 'No car_id'}), 400
+    conn = get_db().conn
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT r.ranking, r.review_content, r.submit_datetime, u.email
+        FROM reviews r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.car_id = ? AND r.show_state = 1
+        ORDER BY r.submit_datetime DESC
+    ''', (car_id,))
+    reviews = [dict(row) for row in cur.fetchall()]
+    return jsonify(reviews)
 
 if __name__ == '__main__':
     os.makedirs('static', exist_ok=True)

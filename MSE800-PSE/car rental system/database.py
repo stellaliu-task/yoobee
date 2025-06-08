@@ -1,4 +1,5 @@
 import sqlite3
+import os
 import threading
 
 class Database:
@@ -14,11 +15,12 @@ class Database:
         return cls._instance
 
     def __init__(self, db_file="car_rental.db"):
-        #cursor = self.conn.cursor()
-        #cursor.execute('ALTER TABLE orders ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP')
         if getattr(self, '_initialized', False):
             return
-        self.db_file = db_file
+        # Always use an absolute path based on this file's location
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        abs_db_path = os.path.join(base_dir, db_file)
+        self.db_file = abs_db_path
         self._initialized = True
 
     @property

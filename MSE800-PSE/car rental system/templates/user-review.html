@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Submit Review | Premium Rentals</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .review-container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px #eee; padding: 32px; }
+        .review-header { margin-bottom: 20px; }
+        .review-header h2 { font-size: 2rem; margin: 0 0 6px 0; }
+        .review-stars { font-size: 2rem; color: #FFD600; cursor: pointer; margin-bottom: 12px; }
+        .review-stars .fa-star { transition: color 0.2s; }
+        .review-stars .fa-star.inactive { color: #e0e0e0; }
+        textarea { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; margin-bottom: 18px; resize: vertical; }
+        .btn-submit { background: #4CAF50; color: white; padding: 12px 20px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+        .success-msg { color: #1abc9c; margin-top: 16px; font-weight: 500; }
+        .review-already { background: #fafad2; border-left: 6px solid #ffd600; margin-bottom: 18px; padding: 12px; border-radius: 7px; }
+    </style>
+</head>
+<body>
+    <div class="web-container">
+        <header class="web-header">
+            <div class="logo">
+                <i class="fas fa-car"></i>
+                <h1>Premium Rentals</h1>
+            </div>
+            <nav>
+                <a href="/user-orders"><i class="fas fa-list"></i> My Orders</a>
+                <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </header>
+        <main>
+            <div class="review-container">
+                <div class="review-header">
+                    <h2><i class="fas fa-star"></i> Submit Your Review</h2>
+                    <div id="review-car-info"></div>
+                </div>
+                <div id="existing-review" class="review-already" style="display:none;"></div>
+                <form id="review-form" style="display:none;">
+                    <label>Ranking (1-10):</label>
+                    <div class="review-stars" id="star-container"></div>
+                    <input type="hidden" id="ranking" name="ranking" value="10">
+                    <label for="review-content">Your Review:</label>
+                    <textarea id="review-content" name="review_content" rows="5" maxlength="1000" placeholder="Share your experience..." required></textarea>
+                    <button type="submit" class="btn-submit">Submit Review</button>
+                </form>
+                <div id="review-success" class="success-msg" style="display:none;"></div>
+            </div>
+        </main>
+        <footer>
+            <p style="text-align:center;">&copy; 2025 Premium Car Rentals</p>
+        </footer>
+    </div>
+    <script>
+    // Utility to get query param
+    function getQueryParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+    }
+
+    // Load car/order info
+    function loadCarInfo(orderId) {
+        fetch(`/api/user/order/${orderId}`)
+        .then(res => res.json())
+        .then(order => {
+            document.getElementById('review-car-info').innerHTML = `
+                <b>Car:</b> ${order.car_name} <br>
+                <b>Order Dates:</b> ${order.start_datetime.slice(0,10)} - ${order.end_datetime.slice(0,10)}
+            `;
+        });
+    }
+
+    // Load existing review
+    function loadExistingReview(orderId) {
+        fetch(`/api/user/review?order_id=${orderId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.review) {
+                // User already reviewed
+                document.getElementById('existing-review').style.display = '';
+                document.getElementById('existing-review').innerHTML = `
+                    <b>Your previous review:</b><br>
+                    <span>Ranking: ${data.review.ranking} / 10</span><br>
+                    <span>${data.review.review_content}</span>
+                `;
+            } else {
+                document.getElementById('review-form').style.display = '';
+            }
+        });
+    }
+
+    // Star rating handler
+    function renderStars(rating) {
+        let html = '';
+        for (let i = 1; i <= 10; i++) {
+            html += `<i class="fas fa-star${i <= rating ? '' : ' inactive'}" data-star="${i}"></i>`;
+        }
+        document.getElementById('star-container').innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderId = getQueryParam('order_id');
+        if (!orderId) {
+            document.querySelector('.review-header h2').innerText = "Order not found";
+            return;
+        }
+
+        loadCarInfo(orderId);
+        loadExistingReview(orderId);
+
+        // Initial stars at 10
+        renderStars(10);
+
+        // Star click
+        document.getElementById('star-container').addEventListener('click', function(e) {
+            if (e.target.classList.contains('fa-star')) {
+                const rating = e.target.getAttribute('data-star');
+                document.getElementById('ranking').value = rating;
+                renderStars(rating);
+            }
+        });
+
+        // Review submit
+        document.getElementById('review-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            formData.append('order_id', orderId);
+            fetch('/api/user/review', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('review-form').style.display = 'none';
+                    document.getElementById('review-success').style.display = '';
+                    document.getElementById('review-success').innerText = "✅ Review submitted! Thank you.";
+                } else {
+                    alert(data.error || "Submission failed.");
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>
