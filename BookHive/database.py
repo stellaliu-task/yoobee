@@ -129,6 +129,27 @@ class Database:
                 FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE
             )
         ''')
+        # themes table
+        cursor.execute('''
+            CREATE TABLE themes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                is_hidden BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # theme_books table
+        cursor.execute('''
+            CREATE TABLE theme_books (
+                theme_id INTEGER,
+                book_id INTEGER,
+                PRIMARY KEY (theme_id, book_id),
+                FOREIGN KEY (theme_id) REFERENCES themes(id) ON DELETE CASCADE,
+                FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+            )
+        ''')
+
         self.conn.commit()
 
     def close(self):
