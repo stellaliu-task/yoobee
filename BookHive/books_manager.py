@@ -4,50 +4,52 @@ class BooksManager:
     def __init__(self, db_conn):
         self.conn = db_conn
 
-    def add_book(self, user_id, title, author, description, catalog, status, tags):
-        """Add a new book with tags for this user."""
+    def add_book(self, user_id, title, author, description, catalog, cover_picture, status, tags):
         cur = self.conn.cursor()
-        # Insert book
-        cur.execute("""
-            INSERT INTO books (user_id, title, author, description, catalog, status)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (user_id, title, author, description, catalog, status))
+        cur.execute(
+            "INSERT INTO books (user_id, title, author, description, catalog, cover_picture, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, title, author, description, catalog, cover_picture, status)
+        )
         book_id = cur.lastrowid
-        # Add tags (if any)
         for tag in tags:
-            cur.execute("INSERT OR IGNORE INTO tags (name) VALUES (?)", (tag,))
-            tag_id = cur.execute("SELECT id FROM tags WHERE name = ?", (tag,)).fetchone()[0]
-            cur.execute("INSERT OR IGNORE INTO book_tags (book_id, tag_id) VALUES (?, ?)", (book_id, tag_id))
+            tag_id = self.get_or_create_tag(tag)
+            cur.execute(
+                "INSERT OR IGNORE INTO book_tags (book_id, tag_id) VALUES (?, ?)",
+                (book_id, tag_id)
+            )
         self.conn.commit()
         return book_id
 
-    def edit_book(self, book_id, user_id, title=None, author=None, description=None, catalog=None, status=None):
-        """Edit a user's book (only fields given)."""
+    def edit_book(self, book_id, user_id, title=None, author=None, description=None, catalog=None, status=None, cover_picture=None): 
         cur = self.conn.cursor()
         updates = []
         params = []
-        if title:
+        if title is not None:
             updates.append("title=?")
             params.append(title)
-        if author:
+        if author is not None:
             updates.append("author=?")
             params.append(author)
-        if description:
+        if description is not None:
             updates.append("description=?")
             params.append(description)
-        if catalog:
+        if catalog is not None:
             updates.append("catalog=?")
             params.append(catalog)
-        if status:
+        if status is not None:
             updates.append("status=?")
             params.append(status)
+        if cover_picture is not None:
+            updates.append("cover_picture=?")
+            params.append(cover_picture)
         if updates:
             params += [book_id, user_id]
-            sql = f"UPDATE books SET {', '.join(updates)} WHERE id=? AND user_id=? AND is_deleted=0"
+            sql = f"UPDATE books SET {', '.join(updates)} WHERE id=? AND user_id=? AND (is_deleted IS NULL OR is_deleted=0)"
             cur.execute(sql, params)
             self.conn.commit()
             return True
         return False
+
 
     def hide_book(self, book_id, user_id):
         """User soft deletes (hides) their own book."""

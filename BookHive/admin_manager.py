@@ -48,27 +48,35 @@ class AdminManager:
             JOIN users u ON a.user_id = u.id
             ORDER BY a.created_at DESC
         """).fetchall()
+    
     def hide_review(self, review_id):
         self.execute("UPDATE reviews SET is_deleted = 1 WHERE id = ?", (review_id,))
+        self.conn.commit()
 
     def hide_book(self, book_id):
         self.execute("UPDATE books SET is_deleted = 1 WHERE id = ?", (book_id,))
+        self.conn.commit()
 
     def restore_book(self, book_id):
         self.execute("UPDATE books SET is_deleted = 0 WHERE id = ?", (book_id,))
+        self.conn.commit()
 
     def restore_review(self, review_id):
         self.execute("UPDATE reviews SET is_deleted = 0 WHERE id = ?", (review_id,))
+        self.conn.commit()
 
     def add_theme(self, title, is_hidden=False):
         self.execute("INSERT INTO themes (title, is_hidden) VALUES (?, ?)",(title, int(is_hidden)))
+        self.conn.commit()
         
     def set_theme_visibility(self, theme_id, hide=True):
         self.execute("UPDATE themes SET is_hidden = ? WHERE id = ?",(int(hide), theme_id))
+        self.conn.commit()
 
 
     def add_book_to_theme(self, theme_id, book_id):
         self.execute("INSERT OR IGNORE INTO theme_books (theme_id, book_id) VALUES (?, ?)",(theme_id, book_id))
+        self.conn.commit()
 
     def get_visible_themes(self):
         return self.execute(
