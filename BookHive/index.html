@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookHive - Your Personal Book Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .auth-section {
+            display: flex;
+            gap: 1rem;
+        }
+        button, input[type="submit"] {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover, input[type="submit"]:hover {
+            background-color: #2980b9;
+        }
+        .book-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .hidden {
+            display: none;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 1rem;
+        }
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            background-color: #ecf0f1;
+            margin-right: 0.5rem;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input, 
+        .form-group textarea, 
+        .form-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .error-message {
+            color: #e74c3c;
+            margin-top: 0.5rem;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>BookHive</h1>
+        <div class="auth-section">
+            <div id="loggedOut">
+                <button id="loginBtn">Login</button>
+                <button id="registerBtn">Register</button>
+            </div>
+            <div id="loggedIn" class="hidden">
+                <span id="usernameDisplay"></span>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="mainContent" class="hidden">
+            <div class="tabs">
+                <div class="tab active" data-tab="myBooks">My Books</div>
+                <div class="tab" data-tab="addBook">Add Book</div>
+                <div class="tab" data-tab="profile">Profile</div>
+            </div>
+            
+            <div class="tab-content active" id="myBooks">
+                <h2>My Book Collection</h2>
+                <div id="bookList"></div>
+            </div>
+            
+            <div class="tab-content" id="addBook">
+                <h2>Add New Book</h2>
+                <form id="addBookForm">
+                    <div class="form-group">
+                        <label for="title">Title:*</label>
+                        <input type="text" id="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="author">Author:</label>
+                        <input type="text" id="author">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea id="description" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status:*</label>
+                        <select id="status" required>
+                            <option value="">Select status</option>
+                            <option value="want_to_read">Want to Read</option>
+                            <option value="reading">Currently Reading</option>
+                            <option value="read">Read</option>
+                        </select>
+                    </div>
+                    <div id="addBookError" class="error-message hidden"></div>
+                    <button type="submit" id="addBookSubmit">
+                        <span id="addBookText">Add Book</span>
+                        <span id="addBookSpinner" class="loading hidden"></span>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="tab-content" id="profile">
+                <h2>My Profile</h2>
+                <div id="profileInfo"></div>
+                <h3>Update Profile</h3>
+                <form id="updateProfileForm">
+                    <div class="form-group">
+                        <label for="updateUsername">Username:</label>
+                        <input type="text" id="updateUsername">
+                    </div>
+                    <div class="form-group">
+                        <label for="updateEmail">Email:</label>
+                        <input type="email" id="updateEmail">
+                    </div>
+                    <div class="form-group">
+                        <label for="updatePassword">New Password:</label>
+                        <input type="password" id="updatePassword">
+                    </div>
+                    <div id="updateProfileError" class="error-message hidden"></div>
+                    <button type="submit" id="updateProfileSubmit">
+                        <span id="updateProfileText">Update Profile</span>
+                        <span id="updateProfileSpinner" class="loading hidden"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="authForms" class="hidden">
+            <div id="loginForm">
+                <h2>Login</h2>
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label for="loginUsername">Username or Email:*</label>
+                        <input type="text" id="loginUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password:*</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <div id="loginError" class="error-message hidden"></div>
+                    <button type="submit" id="loginSubmit">
+                        <span id="loginText">Login</span>
+                        <span id="loginSpinner" class="loading hidden"></span>
+                    </button>
+                </form>
+            </div>
+            
+            <div id="registerForm" class="hidden">
+                <h2>Register</h2>
+                <form id="registerFormElement">
+                    <div class="form-group">
+                        <label for="regUsername">Username:*</label>
+                        <input type="text" id="regUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email:*</label>
+                        <input type="email" id="regEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Password:*</label>
+                        <input type="password" id="regPassword" required minlength="6">
+                    </div>
+                    <div id="registerError" class="error-message hidden"></div>
+                    <button type="submit" id="registerSubmit">
+                        <span id="registerText">Register</span>
+                        <span id="registerSpinner" class="loading hidden"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

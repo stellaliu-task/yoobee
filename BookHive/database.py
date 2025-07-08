@@ -66,6 +66,7 @@ class Database:
                 catalog TEXT,
                 cover_picture BLOB NOT NULL,
                 status TEXT CHECK(status IN ('want_to_read', 'reading', 'read')) NOT NULL,
+                is_deleted INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
@@ -98,6 +99,7 @@ class Database:
                 book_id INTEGER,
                 action TEXT NOT NULL,     -- e.g., 'added_book', 'updated_status'
                 message TEXT,
+                is_deleted INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE

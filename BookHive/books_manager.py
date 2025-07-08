@@ -4,7 +4,21 @@ class BooksManager:
     def __init__(self, db_conn):
         self.conn = db_conn
 
+    def get_or_create_tag(self, tag_name):
+        cur = self.conn.cursor()
+        # Try to get existing tag
+        cur.execute("SELECT id FROM tags WHERE name = ?", (tag_name,))
+        tag = cur.fetchone()
+        if tag:
+            return tag[0]
+        # Create new tag if it doesn't exist
+        cur.execute("INSERT INTO tags (name) VALUES (?)", (tag_name,))
+        return cur.lastrowid
+
     def add_book(self, user_id, title, author, description, catalog, cover_picture, status, tags):
+        if status not in ('want_to_read', 'reading', 'read'):
+            raise ValueError("Invalid status value")
+            
         cur = self.conn.cursor()
         cur.execute(
             "INSERT INTO books (user_id, title, author, description, catalog, cover_picture, status) VALUES (?, ?, ?, ?, ?, ?, ?)",

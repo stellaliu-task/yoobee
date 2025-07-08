@@ -1,6 +1,10 @@
 from database import Database
 import os
 
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+COVERS_DIR = os.path.join(PROJECT_ROOT, "covers")
+
+
 def get_image_bytes(filename):
     with open(filename, "rb") as f:
         return f.read()
@@ -135,7 +139,13 @@ def main():
 
         book_ids = []
         for book in book_data:
-            cover_bytes = get_image_bytes(book["cover_img"])
+            cover_path = os.path.join(COVERS_DIR, os.path.basename(book["cover_img"]))
+            print("Trying to load cover image:", cover_path)
+            if os.path.exists(cover_path):
+                cover_bytes = get_image_bytes(cover_path)
+            else:
+                print(f"Cover image not found: {cover_path}, inserting NULL for cover_picture.")
+                cover_bytes = None  # Or use default
             db.conn.execute("""
                 INSERT INTO books (user_id, title, author, description, catalog, cover_picture, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -147,6 +157,8 @@ def main():
                     "INSERT OR IGNORE INTO book_tags (book_id, tag_id) VALUES (?, ?)",
                     (book_id, tag_ids[tag])
                 )
+
+
 
         # --- ACTIVITIES ---
         for book_id in book_ids:

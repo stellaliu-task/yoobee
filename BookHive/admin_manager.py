@@ -5,6 +5,11 @@ class AdminManager:
     def __init__(self, conn):
         self.conn = conn
     
+    def execute(self, sql, params=()):
+        cursor = self.conn.cursor()
+        cursor.execute(sql, params)
+        return cursor
+    
     def _verify_password(self, stored_hash, password):
         if not stored_hash or not password:
             return False
@@ -20,8 +25,8 @@ class AdminManager:
         except Exception:
             return False
         
-    def is_admin(self, user_id):
-        result = self.execute("SELECT 1 FROM admins WHERE user_id = ?", (user_id,))
+    def is_admin(self, email):
+        result = self.execute("SELECT 1 FROM admins WHERE email = ?", (email,))
         return result.fetchone() is not None
     
     def search_users(self, term):
